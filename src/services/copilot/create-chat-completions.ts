@@ -5,6 +5,42 @@ import { copilotHeaders, copilotBaseUrl } from "~/lib/api-config"
 import { HTTPError } from "~/lib/error"
 import { state } from "~/lib/state"
 
+const normalizeMcpToolSchemas = (
+  payload: ChatCompletionsPayload,
+): ChatCompletionsPayload => {
+  if (!payload.tools?.length) return payload
+
+  let changed = false
+  const tools = payload.tools.map((tool) => {
+    if (tool.type !== "function") return tool
+    const name = tool.function?.name
+    if (!name?.startsWith("mcp__")) return tool
+
+    const parameters = tool.function?.parameters
+    if (!parameters || typeof parameters !== "object") return tool
+
+    const parameterRecord = parameters as Record<string, unknown>
+    if (parameterRecord.type !== "object") return tool
+    if (Object.prototype.hasOwnProperty.call(parameterRecord, "properties")) {
+      return tool
+    }
+
+    changed = true
+    return {
+      ...tool,
+      function: {
+        ...tool.function,
+        parameters: {
+          ...parameterRecord,
+          properties: {},
+        },
+      },
+    }
+  })
+
+  return changed ? { ...payload, tools } : payload
+}
+
 export const createChatCompletions = async (
   payload: ChatCompletionsPayload,
 ) => {
@@ -28,10 +64,12 @@ export const createChatCompletions = async (
     "X-Initiator": isAgentCall ? "agent" : "user",
   }
 
+  const normalizedPayload = normalizeMcpToolSchemas(payload)
+
   const response = await fetch(`${copilotBaseUrl(state)}/chat/completions`, {
     method: "POST",
     headers,
-    body: JSON.stringify(payload),
+    body: JSON.stringify(normalizedPayload),
   })
 
   if (!response.ok) {
