@@ -15,3 +15,7 @@ dist/
 
 # worktrees
 .worktrees/
+
+# local claude config
+.claude/
+CLAUDE.md
