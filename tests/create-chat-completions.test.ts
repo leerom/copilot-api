@@ -80,3 +80,33 @@ test("fills missing properties for mcp tool schema", async () => {
   >
   expect(parameters).toMatchObject({ type: "object", properties: {} })
 })
+
+test("fills null properties for mcp tool schema", async () => {
+  const payload: ChatCompletionsPayload = {
+    messages: [{ role: "user", content: "hi" }],
+    model: "gpt-test",
+    tools: [
+      {
+        type: "function",
+        function: {
+          name: "mcp__example",
+          parameters: {
+            type: "object",
+            properties: null,
+          },
+        },
+      },
+    ],
+  }
+  await createChatCompletions(payload)
+  expect(fetchMock).toHaveBeenCalled()
+  const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]
+  const body = (lastCall[1] as FetchMockOptions).body
+  expect(body).toBeDefined()
+  const parsed = JSON.parse(body ?? "{}") as ChatCompletionsPayload
+  const parameters = parsed.tools?.[0].function.parameters as Record<
+    string,
+    unknown
+  >
+  expect(parameters).toMatchObject({ type: "object", properties: {} })
+})

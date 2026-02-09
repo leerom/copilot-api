@@ -21,7 +21,8 @@ const normalizeMcpToolSchemas = (
 
     const parameterRecord = parameters as Record<string, unknown>
     if (parameterRecord.type !== "object") return tool
-    if (Object.prototype.hasOwnProperty.call(parameterRecord, "properties")) {
+    const properties = parameterRecord.properties
+    if (properties && typeof properties === "object") {
       return tool
     }
 
