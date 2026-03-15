@@ -54,6 +54,7 @@ export const createChatCompletions = async (
     method: "POST",
     headers,
     body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(1200e3),
   })
 
   if (!response.ok) {

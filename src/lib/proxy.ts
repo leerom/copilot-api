@@ -6,7 +6,7 @@ export function initProxyFromEnv(): void {
   if (typeof Bun !== "undefined") return
 
   try {
-    const direct = new Agent()
+    const direct = new Agent({ bodyTimeout: 1200e3 })
     const proxies = new Map<string, ProxyAgent>()
 
     // We only need a minimal dispatcher that implements `dispatch` at runtime.
@@ -34,7 +34,7 @@ export function initProxyFromEnv(): void {
           }
           let agent = proxies.get(proxyUrl)
           if (!agent) {
-            agent = new ProxyAgent(proxyUrl)
+            agent = new ProxyAgent({ uri: proxyUrl, bodyTimeout: 1200e3 })
             proxies.set(proxyUrl, agent)
           }
           let label = proxyUrl
